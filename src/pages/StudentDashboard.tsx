@@ -13,10 +13,11 @@ type AttendanceRecord = {
 };
 
 const EXAMPLE_ATTENDANCE = [
-  { subject: "Mathematics", date: "2025-06-01", marked: true },
-  { subject: "Physics", date: "2025-06-01", marked: false },
-  { subject: "Chemistry", date: "2025-05-28", marked: true },
-  { subject: "English", date: "2025-05-27", marked: true },
+  { subject: "Compiler Design", date: "2025-06-01", marked: false },
+  { subject: "Computer Network", date: "2025-06-01", marked: false },
+  { subject: "Development Engineering", date: "2025-06-01", marked: false },
+  { subject: "Machine Learning", date: "2025-06-01", marked: false },
+  { subject: "GIS", date: "2025-06-01", marked: false },
 ];
 
 export default function StudentDashboard() {

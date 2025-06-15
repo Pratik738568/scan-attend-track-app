@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QrCode } from "lucide-react";
@@ -66,7 +67,17 @@ export default function StudentDashboard() {
     if (!user) return;
     setLoadingAtt(true);
     getAttendanceForStudent(user.roll || user.prn) // Use whatever is available
-      .then(data => setAtt(data || []))
+      .then(data =>
+        setAtt(
+          (data || []).map((rec: any) => ({
+            subject: rec.subject,
+            date: rec.date,
+            time: rec.time,
+            marked: true,
+            id: rec.id,
+          }))
+        )
+      )
       .catch(() => setAtt([]))
       .finally(() => setLoadingAtt(false));
   }, [user]);
@@ -106,7 +117,17 @@ export default function StudentDashboard() {
       // Refetch list
       setLoadingAtt(true);
       getAttendanceForStudent(user.roll || user.prn)
-        .then(data => setAtt(data || []))
+        .then(data =>
+          setAtt(
+            (data || []).map((rec: any) => ({
+              subject: rec.subject,
+              date: rec.date,
+              time: rec.time,
+              marked: true,
+              id: rec.id,
+            }))
+          )
+        )
         .finally(() => setLoadingAtt(false));
       setScanMode(false);
       setScanResult(null);

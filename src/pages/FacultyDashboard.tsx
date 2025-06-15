@@ -21,27 +21,25 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { getAttendanceForFaculty } from "@/integrations/supabase/attendance";
+import SessionAttendanceList from "@/components/SessionAttendanceList";
 
 type AttendanceSession = {
   id: string,
   subject: string,
+  year: string,
   date: string,
   time: string,
   codeValue: string,
-  students: { name: string, rollNumber: string, present: boolean }[]
 };
 
 const DEMO_SESSIONS_INIT: AttendanceSession[] = [
   {
     id: "1",
     subject: "Physics",
+    year: "Third Year",
     date: "2025-06-14",
     time: "09:30",
-    codeValue: "physics@2025-06-14@0930",
-    students: [
-      { name: "Student Sam", rollNumber: "TY001", present: true },
-      { name: "Jane Doe", rollNumber: "TY002", present: false }
-    ]
+    codeValue: "physics@2025-06-14@0930"
   }
 ];
 
@@ -116,6 +114,8 @@ export default function FacultyDashboard() {
     setQRData(d => ({ ...d, time: value }));
   }
 
+  // Remove all references to .students in the session list
+  // Only new sessions (when QR is generated) need subject/year/date/time for history
   function handleGenerateQR(e: React.FormEvent) {
     e.preventDefault();
     const today = getToday();
@@ -129,34 +129,15 @@ export default function FacultyDashboard() {
       {
         id: `${Date.now()}`,
         subject: qrData.subject,
+        year: qrData.year,
         date: today,
         time: qrData.time,
         codeValue,
-        students: [
-          // Dummy students with roll numbers
-          { name: "Student Sam", rollNumber: "TY001", present: false },
-          { name: "Jane Doe", rollNumber: "TY002", present: false }
-        ]
       },
       ...ses
     ]);
     setShowNew(false);
     setShowToast("QR Code generated!");
-  }
-
-  function handleToggleAttendance(sessionIdx: number, i: number) {
-    setSessions(s =>
-      s.map((ses, idx) =>
-        idx === sessionIdx
-          ? {
-              ...ses,
-              students: ses.students.map((stu, j) =>
-                i === j ? { ...stu, present: !stu.present } : stu
-              )
-            }
-          : ses
-      )
-    );
   }
 
   // Filtered sessions for report, based on fromDate/toDate
@@ -176,16 +157,16 @@ export default function FacultyDashboard() {
     // Header row
     let csv = "Session ID,Subject,Date,Time,Student Name,Present\n";
     filteredSessionsForReport.forEach((session) => {
-      session.students.forEach((stu) => {
-        csv += [
-          session.id,
-          `"${session.subject}"`,
-          session.date,
-          session.time,
-          `"${stu.name}"`,
-          stu.present ? "Yes" : "No",
-        ].join(",") + "\n";
-      });
+      // session.students.forEach((stu) => { // REMOVE
+      //   csv += [
+      //     session.id,
+      //     `"${session.subject}"`,
+      //     session.date,
+      //     session.time,
+      //     `"${stu.name}"`,
+      //     stu.present ? "Yes" : "No",
+      //   ].join(",") + "\n";
+      // });
     });
 
     // Trigger download
@@ -426,24 +407,14 @@ export default function FacultyDashboard() {
                     <div className="my-2 flex flex-col gap-1">
                       <details>
                         <summary className="cursor-pointer hover:underline text-sm">
-                          Student Attendance ({ses.students.length})
+                          Student Attendance
                         </summary>
-                        <ul className="px-2 mt-1">
-                          {ses.students.map((stu, i) => (
-                            <li key={i} className="flex items-center justify-between gap-2 py-1 text-sm">
-                              <span>
-                                <span className="font-medium">{stu.name}</span>
-                                <span className="ml-2 text-gray-400 text-xs">({stu.rollNumber})</span>
-                              </span>
-                              <button
-                                className={`px-2 py-1 rounded-full text-xs font-semibold ${stu.present ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-600"}`}
-                                onClick={() => handleToggleAttendance(idx, i)}
-                              >
-                                {stu.present ? "Present" : "Absent"}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
+                        <SessionAttendanceList
+                          subject={ses.subject}
+                          year={ses.year}
+                          date={ses.date}
+                          time={ses.time}
+                        />
                       </details>
                     </div>
                     <div className="mt-2 flex items-center gap-2">

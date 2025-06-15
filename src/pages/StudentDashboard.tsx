@@ -98,19 +98,27 @@ export default function StudentDashboard() {
     setShowToast("Marking attendance...");
     try {
       const now = new Date();
-      // For demo, parse QR value for subject/date/time if possible
       let subject = "Unknown";
       let date = now.toISOString().slice(0, 10);
-      let time = now.toTimeString().slice(0, 5);
+      let time = now.toTimeString().slice(0, 5); // may be "09:30"
       if (scanResult && scanResult.includes("@")) {
         const parts = scanResult.split("@");
         if (parts.length >= 3) {
           subject = parts[0];
           date = parts[1];
           time = parts[2];
+          // Normalize time: "0930" ya "09:30" ko "0930" me convert karein
+          if (typeof time === "string" && time.length === 5 && time[2] === ":") {
+            time = time.replace(":", ""); // "09:30" -> "0930"
+          }
+        }
+      } else {
+        // Yahaan bhi: agar time format me ":" ho toh remove karna chahiye
+        if (typeof time === "string" && time.length === 5 && time[2] === ":") {
+          time = time.replace(":", "");
         }
       }
-      // Normalize student year for proper matching in faculty dashboard
+      // Normalize year
       let rawYear = user.year || "Unknown";
       let normalizedYear = YEAR_NORMALIZATION[String(rawYear).trim().toLowerCase()] || rawYear;
 

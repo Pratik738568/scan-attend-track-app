@@ -18,9 +18,16 @@ export default function SessionAttendanceList(props: SessionAttendanceListProps)
     setLoading(true);
     getAttendanceForFaculty(date, year, subject)
       .then(data => {
-        console.log("Attendance fetch:", { data, facultySession: { subject, year, date, time } });
-        // Filter on time as well (since getAttendanceForFaculty doesn't include time)
-        setRecords((data || []).filter(rec => rec.time === time));
+        // Normalize both to string and trim, also log for debugging
+        const DBtimes = (data || []).map((rec: any) => rec.time);
+        console.log("FACULTY ATTENDANCE FILTER", { uiTime: time, DBtimes });
+        setRecords(
+          (data || []).filter(
+            rec => typeof rec.time === "string" &&
+            typeof time === "string" &&
+            rec.time.trim() === time.trim()
+          )
+        );
       })
       .catch((err) => {
         console.log("Attendance fetch error:", err);

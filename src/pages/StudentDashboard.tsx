@@ -100,29 +100,36 @@ export default function StudentDashboard() {
       const now = new Date();
       let subject = "Unknown";
       let date = now.toISOString().slice(0, 10);
-      // By default, make time "HH:mm" (colon format)
-      let time = now.toTimeString().slice(0, 5); // "09:30"
+      let time = now.toTimeString().slice(0, 5); // "HH:mm"
       if (scanResult && scanResult.includes("@")) {
         const parts = scanResult.split("@");
         if (parts.length >= 3) {
           subject = parts[0];
           date = parts[1];
           time = parts[2];
-          // Normalize time: ensure colon present, always "HH:mm"
+          // Normalize to "HH:mm"
           if (typeof time === "string" && time.length === 4 && !time.includes(":")) {
-            // e.g., "0930" -> "09:30"
             time = `${time.slice(0,2)}:${time.slice(2,4)}`;
+          }
+          if (typeof time === "string" && time.length === 5 && time[2] === ":") {
+            // keep as is but remove spaces
+            time = time.trim();
           }
         }
       } else {
-        // In case time is "0930", convert to "09:30"
         if (typeof time === "string" && time.length === 4 && !time.includes(":")) {
           time = `${time.slice(0,2)}:${time.slice(2,4)}`;
         }
+        if (typeof time === "string" && time.length === 5 && time[2] === ":") {
+          time = time.trim();
+        }
       }
-      // Normalize year for matching
+      // Normalize year
       let rawYear = user.year || "Unknown";
       let normalizedYear = YEAR_NORMALIZATION[String(rawYear).trim().toLowerCase()] || rawYear;
+
+      // LOG for debug
+      console.log("Student INSERT ATTENDANCE", { subject, year: normalizedYear, date, time });
 
       await insertAttendance({
         student_id: user.roll || user.prn,
@@ -130,7 +137,7 @@ export default function StudentDashboard() {
         subject,
         year: normalizedYear,
         date,
-        time, // always "HH:mm" like "09:30"
+        time,
         qr_code_value: scanResult || "",
         marked_by: "student"
       });

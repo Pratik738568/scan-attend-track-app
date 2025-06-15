@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QrCode, Plus } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import RoleGuard from "@/components/RoleGuard";
@@ -20,6 +20,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { getAttendanceForFaculty } from "@/integrations/supabase/attendance";
 
 type AttendanceSession = {
   id: string,
@@ -199,6 +200,60 @@ export default function FacultyDashboard() {
     setShowToast("Report downloaded!");
   }
 
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [loadingAttendance, setLoadingAttendance] = useState(false);
+
+  // On component mount/filter change, fetch attendance records from Supabase
+  useEffect(() => {
+    setLoadingAttendance(true);
+    // Add filtering options in future
+    getAttendanceForFaculty()
+      .then(data => setAttendance(data || []))
+      .catch(() => setAttendance([]))
+      .finally(() => setLoadingAttendance(false));
+  }, []); // Add filter deps when implemented
+
+  // Filtered sessions for report, based on fromDate/toDate
+  const filteredSessionsForReport = sessions.filter(session => {
+    if (!fromDate && !toDate) return true;
+    const sessionDt = parseIsoDate(session.date);
+    if (fromDate && sessionDt < fromDate) return false;
+    if (toDate && sessionDt > toDate) return false;
+    return true;
+  });
+
+  function handleGenerateReport() {
+    if (!filteredSessionsForReport.length) {
+      setShowToast("No sessions to report in range.");
+      return;
+    }
+    // Header row
+    let csv = "Session ID,Subject,Date,Time,Student Name,Present\n";
+    filteredSessionsForReport.forEach((session) => {
+      session.students.forEach((stu) => {
+        csv += [
+          session.id,
+          `"${session.subject}"`,
+          session.date,
+          session.time,
+          `"${stu.name}"`,
+          stu.present ? "Yes" : "No",
+        ].join(",") + "\n";
+      });
+    });
+
+    // Trigger download
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "attendance_report.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setShowToast("Report downloaded!");
+  }
+
   return (
     <RoleGuard role="faculty">
       <div className="min-h-screen bg-gradient-to-br from-fuchsia-50 to-indigo-100 flex flex-col items-center px-2 pt-4">
@@ -208,12 +263,13 @@ export default function FacultyDashboard() {
           </span>
           <button className="py-1 px-4 text-xs rounded bg-indigo-200 hover:bg-indigo-300 ml-2 font-medium" onClick={handleLogout}>Logout</button>
         </header>
-        <div className="w-full max-w-lg bg-white rounded-xl shadow-xl px-6 py-7 flex flex-col gap-5 items-center">
-          <button onClick={handleOpenQRForm} className="w-full flex items-center justify-center py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold shadow-md hover-scale">
-            <Plus className="mr-2 w-7 h-7"/> Generate QR for Attendance
-          </button>
-
-          {/* Date range picker for report */}
+        <div className="w-full max-w-2xl bg-white rounded-xl shadow-xl px-6 py-7 flex flex-col gap-5 items-center">
+          <div className="w-full flex flex-row items-center justify-between">
+            <span className="font-semibold text-indigo-700 text-xl flex items-center gap-2">
+              <QrCode className="w-7 h-7" /> Faculty Dashboard
+            </span>
+            <button className="py-1 px-4 text-xs rounded bg-indigo-200 hover:bg-indigo-300 ml-2 font-medium" onClick={handleLogout}>Logout</button>
+          </div>
           <div className="flex flex-col md:flex-row gap-2 w-full items-center justify-center mt-2">
             <span className="font-semibold text-sm text-indigo-800">Report range:</span>
             <Popover>
@@ -435,6 +491,42 @@ export default function FacultyDashboard() {
             )}
           </div>
         </div>
+        <div className="w-full mt-4">
+            <h3 className="text-lg font-semibold mb-2">Attendance Records</h3>
+            {loadingAttendance ? (
+              <div className="text-gray-400">Loading...</div>
+            ) : (
+              <table className="w-full text-sm rounded bg-indigo-50">
+                <thead>
+                  <tr>
+                    <th className="p-2">Student Name</th>
+                    <th className="p-2">Subject</th>
+                    <th className="p-2">Year</th>
+                    <th className="p-2">Date</th>
+                    <th className="p-2">Time</th>
+                    <th className="p-2">QR Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attendance.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="text-gray-400 text-center p-4">No attendance records found.</td>
+                    </tr>
+                  )}
+                  {attendance.map(a => (
+                    <tr key={a.id}>
+                      <td className="p-2">{a.student_name}</td>
+                      <td className="p-2">{a.subject}</td>
+                      <td className="p-2">{a.year}</td>
+                      <td className="p-2">{a.date}</td>
+                      <td className="p-2">{a.time}</td>
+                      <td className="p-2">{a.qr_code_value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         {showToast && (
           <div className="fixed left-1/2 bottom-10 transform -translate-x-1/2 bg-emerald-700 text-white font-semibold px-6 py-2 rounded-xl shadow-lg animate-fade-in">{showToast}</div>
         )}

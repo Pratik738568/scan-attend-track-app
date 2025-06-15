@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QrCode } from "lucide-react";
@@ -10,6 +9,7 @@ type AttendanceRecord = {
   subject: string,
   date: string,
   marked: boolean,
+  id?: string;
 };
 
 const EXAMPLE_ATTENDANCE = [
@@ -23,7 +23,8 @@ const EXAMPLE_ATTENDANCE = [
 export default function StudentDashboard() {
   const [scanMode, setScanMode] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
-  const [att, setAtt] = useState(EXAMPLE_ATTENDANCE);
+  const [att, setAtt] = useState<AttendanceRecord[]>([]);
+  const [loadingAtt, setLoadingAtt] = useState(false);
   const [showToast, setShowToast] = useState<string | null>(null);
   const [hasScanned, setHasScanned] = useState(false); // To prevent multiple scans/session
   const navigate = useNavigate();
@@ -54,15 +55,63 @@ export default function StudentDashboard() {
     }
   }
 
+  const user = (() => {
+    try { return JSON.parse(localStorage.getItem("qr_user") ?? "null"); }
+    catch { return null; }
+  })();
+
+  useEffect(() => {
+    if (!user) return;
+    setLoadingAtt(true);
+    getAttendanceForStudent(user.roll || user.prn) // Use whatever is available
+      .then(data => setAtt(data || []))
+      .catch(() => setAtt([]))
+      .finally(() => setLoadingAtt(false));
+  }, [user]);
+
   function handleMarkAttendance() {
-    // Mark random unmarked subject as present (demo logic)
-    setAtt(a =>
-      a.map(rec => (rec.marked ? rec : { ...rec, marked: true }))
-    );
-    setShowToast("Attendance marked!");
-    setScanMode(false);
-    setScanResult(null);
-    setHasScanned(false);
+    // Insert attendance record in Supabase and update UI
+    if (!user) return setShowToast("User not found. Please log in again.");
+    setShowToast("Marking attendance...");
+    try {
+      const now = new Date();
+      // For demo, parse QR value for subject/date/time if possible
+      let subject = "Unknown";
+      let date = now.toISOString().slice(0, 10);
+      let time = now.toTimeString().slice(0,5);
+      if (scanResult && scanResult.includes("@")) {
+        const parts = scanResult.split("@");
+        if (parts.length >= 3) {
+          subject = parts[0];
+          date = parts[1];
+          time = parts[2];
+        }
+      }
+      await insertAttendance({
+        student_id: user.roll || user.prn,
+        student_name: user.name,
+        subject,
+        year: user.year || "Unknown",
+        date,
+        time,
+        qr_code_value: scanResult || "",
+        marked_by: "student"
+      });
+      setShowToast("Attendance marked!");
+      // Refetch list
+      setLoadingAtt(true);
+      getAttendanceForStudent(user.roll || user.prn)
+        .then(data => setAtt(data || []))
+        .finally(() => setLoadingAtt(false));
+      setScanMode(false);
+      setScanResult(null);
+      setHasScanned(false);
+    } catch (err: any) {
+      setShowToast("Failed to mark: " + (err?.message || "Error"));
+      setScanMode(false);
+      setScanResult(null);
+      setHasScanned(false);
+    }
   }
 
   function handleScanCancel() {
@@ -72,7 +121,10 @@ export default function StudentDashboard() {
   }
 
   function totalPct() {
-    const total = att.length, marked = att.filter(r => r.marked).length;
+    // Calculate based on att.length
+    const total = att.length;
+    // Marked: all supabase entries (since one per mark)
+    const marked = total;
     return total ? Math.round((marked / total) * 100) : 0;
   }
 
@@ -136,15 +188,16 @@ export default function StudentDashboard() {
             <div className="font-bold text-xl text-emerald-600">{totalPct()}%</div>
           </div>
           <div className="w-full mt-2 rounded-lg bg-indigo-50 px-3 py-2 border border-indigo-100">
-            <div className="text-gray-700 text-sm font-medium mb-1">Attendance Records</div>
+            <div className="text-gray-700 text-sm font-medium mb-1">
+              Attendance Records {loadingAtt && <span className="ml-2 text-xs text-gray-400">Loading...</span>}
+            </div>
             <ul className="divide-y divide-indigo-100">
+              {att.length === 0 && !loadingAtt && (<li className="text-gray-400 p-3">No attendance records found.</li>)}
               {att.map((a, i) => (
-                <li key={i} className="flex justify-between py-1.5 items-center">
+                <li key={a.id || i} className="flex justify-between py-1.5 items-center">
                   <span className="font-medium">{a.subject}</span>
-                  <span className={a.marked ? "text-emerald-600 font-semibold" : "text-orange-400"}>
-                    {a.marked ? "Present" : "Absent"}
-                  </span>
-                  <span className="text-xs text-gray-400">{a.date}</span>
+                  <span className="text-emerald-600 font-semibold">Present</span>
+                  <span className="text-xs text-gray-400">{a.date} ({a.time})</span>
                 </li>
               ))}
             </ul>

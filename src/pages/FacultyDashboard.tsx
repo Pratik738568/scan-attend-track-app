@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { QrCode, Plus, View } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
@@ -93,6 +92,39 @@ export default function FacultyDashboard() {
     );
   }
 
+  // Generate CSV for all attendance sessions
+  function handleGenerateReport() {
+    if (!sessions.length) {
+      setShowToast("No sessions to report.");
+      return;
+    }
+    // Header row
+    let csv = "Session ID,Subject,Date,Time,Student Name,Present\n";
+    sessions.forEach((session) => {
+      session.students.forEach((stu) => {
+        csv += [
+          session.id,
+          `"${session.subject}"`,
+          session.date,
+          session.time,
+          `"${stu.name}"`,
+          stu.present ? "Yes" : "No",
+        ].join(",") + "\n";
+      });
+    });
+
+    // Trigger download
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "attendance_report.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setShowToast("Report downloaded!");
+  }
+
   return (
     <RoleGuard role="faculty">
       <div className="min-h-screen bg-gradient-to-br from-fuchsia-50 to-indigo-100 flex flex-col items-center px-2 pt-4">
@@ -106,7 +138,13 @@ export default function FacultyDashboard() {
           <button onClick={handleOpenQRForm} className="w-full flex items-center justify-center py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold shadow-md hover-scale">
             <Plus className="mr-2 w-7 h-7"/> Generate QR for Attendance
           </button>
-
+          {/* New: Generate Report button */}
+          <button
+            onClick={handleGenerateReport}
+            className="w-full py-3 mt-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-base font-semibold shadow-lg border border-emerald-400 transition"
+          >
+            Generate Attendance Report (CSV)
+          </button>
           {showNew && (
             <form className="w-full bg-indigo-50 border border-indigo-100 rounded-lg py-4 px-3 mb-3 flex flex-col gap-3 animate-fade-in" onSubmit={handleGenerateQR}>
               <input name="subject" className="border px-3 py-2 rounded-xl" placeholder="Subject" onChange={handleQRFormChange} value={qrData.subject} required/>

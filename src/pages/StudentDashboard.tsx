@@ -4,10 +4,12 @@ import { QrCode } from "lucide-react";
 import RoleGuard from "@/components/RoleGuard";
 // @ts-ignore-next-line
 import { QrReader } from "react-qr-reader";
+import { getAttendanceForStudent, insertAttendance } from "@/integrations/supabase/attendance";
 
 type AttendanceRecord = {
   subject: string,
   date: string,
+  time?: string,
   marked: boolean,
   id?: string;
 };
@@ -69,9 +71,12 @@ export default function StudentDashboard() {
       .finally(() => setLoadingAtt(false));
   }, [user]);
 
-  function handleMarkAttendance() {
+  async function handleMarkAttendance() {
     // Insert attendance record in Supabase and update UI
-    if (!user) return setShowToast("User not found. Please log in again.");
+    if (!user) {
+      setShowToast("User not found. Please log in again.");
+      return;
+    }
     setShowToast("Marking attendance...");
     try {
       const now = new Date();

@@ -213,47 +213,6 @@ export default function FacultyDashboard() {
       .finally(() => setLoadingAttendance(false));
   }, []); // Add filter deps when implemented
 
-  // Filtered sessions for report, based on fromDate/toDate
-  const filteredSessionsForReport = sessions.filter(session => {
-    if (!fromDate && !toDate) return true;
-    const sessionDt = parseIsoDate(session.date);
-    if (fromDate && sessionDt < fromDate) return false;
-    if (toDate && sessionDt > toDate) return false;
-    return true;
-  });
-
-  function handleGenerateReport() {
-    if (!filteredSessionsForReport.length) {
-      setShowToast("No sessions to report in range.");
-      return;
-    }
-    // Header row
-    let csv = "Session ID,Subject,Date,Time,Student Name,Present\n";
-    filteredSessionsForReport.forEach((session) => {
-      session.students.forEach((stu) => {
-        csv += [
-          session.id,
-          `"${session.subject}"`,
-          session.date,
-          session.time,
-          `"${stu.name}"`,
-          stu.present ? "Yes" : "No",
-        ].join(",") + "\n";
-      });
-    });
-
-    // Trigger download
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "attendance_report.csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setShowToast("Report downloaded!");
-  }
-
   return (
     <RoleGuard role="faculty">
       <div className="min-h-screen bg-gradient-to-br from-fuchsia-50 to-indigo-100 flex flex-col items-center px-2 pt-4">

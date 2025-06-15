@@ -3,6 +3,7 @@ import { QrCode, View, List } from "lucide-react";
 import RoleGuard from "@/components/RoleGuard";
 import { useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
+import SessionAttendanceList from "@/components/SessionAttendanceList";
 
 // Only keep year options for 2nd, 3rd, 4th year (remove 'First Year')
 const YEAR_OPTIONS = [
@@ -103,10 +104,23 @@ export default function HODDashboard() {
             <button type="submit" className="px-4 py-2 mt-1 bg-fuchsia-600 text-white rounded-lg font-semibold hover:bg-fuchsia-700">Create & Show QR</button>
           </form>
           {qrOpen && qrData.subject && qrData.date && qrData.time && (
-            <div className="flex flex-col items-center gap-2 bg-white border ring-2 ring-fuchsia-300 rounded-lg p-4 animate-scale-in mt-2 mb-3">
-              <QRCodeCanvas value={`${qrData.subject}@${qrData.date}@${qrData.time}`} size={90}/>
+            <div className="flex flex-col items-center gap-3 bg-white border ring-2 ring-fuchsia-300 rounded-lg p-4 animate-scale-in mt-2 mb-3 w-full">
+              <QRCodeCanvas 
+                value={`${qrData.subject}@${qrData.date}@${qrData.time}`} 
+                size={200}
+              />
               <span className="text-xs text-gray-400">QR for {qrData.subject}</span>
               <button className="text-xs text-fuchsia-500 underline mt-1" onClick={() => setQROpen(false)}>Close</button>
+              {/* Session Attendance below QR */}
+              <div className="w-full mt-3">
+                <span className="block mb-1 text-sm font-medium text-fuchsia-700">Session Attendance</span>
+                <SessionAttendanceList 
+                  subject={qrData.subject} 
+                  year={selectedYear} 
+                  date={qrData.date} 
+                  time={qrData.time} 
+                />
+              </div>
             </div>
           )}
           <div className="w-full my-3 rounded-lg bg-indigo-50 px-3 py-2 border border-indigo-100 animate-fade-in">

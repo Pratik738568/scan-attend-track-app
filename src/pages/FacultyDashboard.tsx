@@ -36,6 +36,12 @@ export default function FacultyDashboard() {
   const [sessionFilterDays, setSessionFilterDays] = useState(15);
   const navigate = useNavigate();
 
+  // Helper: get current date in YYYY-MM-DD format
+  function getToday() {
+    const now = new Date();
+    return now.toISOString().split("T")[0];
+  }
+
   function handleLogout() {
     localStorage.removeItem("qr_user");
     navigate("/auth");
@@ -43,27 +49,29 @@ export default function FacultyDashboard() {
 
   function handleOpenQRForm() {
     setShowNew(true);
-    setQRData({ subject: "", date: "", time: "" });
+    setQRData({ subject: "", date: getToday(), time: "" });
   }
 
   function handleQRFormChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
-    setQRData(d => ({ ...d, [name]: value }));
+    // Only allow subject and time changes, date is always today's date
+    setQRData(d => name === "date" ? d : { ...d, [name]: value });
   }
 
   function handleGenerateQR(e: React.FormEvent) {
     e.preventDefault();
-    if (!qrData.subject || !qrData.date || !qrData.time) {
+    const today = getToday();
+    if (!qrData.subject || !qrData.time) {
       setShowToast("All fields required.");
       return;
     }
-    // For demo, create unique code value
-    const codeValue = `${qrData.subject}@${qrData.date}@${qrData.time}`;
+    // Always use today's date for the code value and session
+    const codeValue = `${qrData.subject}@${today}@${qrData.time}`;
     setSessions(ses => [
       {
         id: `${Date.now()}`,
         subject: qrData.subject,
-        date: qrData.date,
+        date: today,
         time: qrData.time,
         codeValue,
         students: [
@@ -148,7 +156,7 @@ export default function FacultyDashboard() {
           {showNew && (
             <form className="w-full bg-indigo-50 border border-indigo-100 rounded-lg py-4 px-3 mb-3 flex flex-col gap-3 animate-fade-in" onSubmit={handleGenerateQR}>
               <input name="subject" className="border px-3 py-2 rounded-xl" placeholder="Subject" onChange={handleQRFormChange} value={qrData.subject} required/>
-              <input name="date" type="date" className="border px-3 py-2 rounded-xl" onChange={handleQRFormChange} value={qrData.date} required/>
+              <input name="date" type="date" className="border px-3 py-2 rounded-xl bg-gray-100" value={getToday()} readOnly required/>
               <input name="time" type="time" className="border px-3 py-2 rounded-xl" onChange={handleQRFormChange} value={qrData.time} required/>
               <button type="submit" className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700">Create & Show QR</button>
               <button type="button" className="text-xs mt-2 text-gray-500 underline" onClick={() => setShowNew(false)}>Cancel</button>

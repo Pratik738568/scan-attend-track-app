@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { QrCode, View, List } from "lucide-react";
 import RoleGuard from "@/components/RoleGuard";
@@ -23,13 +24,19 @@ const FACULTY_DATA_BY_YEAR: Record<string, { name: string; sessions: number }[]>
   "Fourth Year": [] // blank
 };
 
-// No department attendance for 2nd/4th year
+// Update Department Attendance to have 5 subjects for Third Year
 const DEPT_ATTENDANCE_BY_YEAR: Record<
   string,
   { subject: string; present: number; total: number }[]
 > = {
   "Second Year": [],
-  "Third Year": [],
+  "Third Year": [
+    { subject: "Data Structures", present: 43, total: 50 },
+    { subject: "Operating Systems", present: 41, total: 50 },
+    { subject: "Computer Networks", present: 48, total: 50 },
+    { subject: "Database Management", present: 45, total: 50 },
+    { subject: "Discrete Mathematics", present: 40, total: 50 },
+  ],
   "Fourth Year": []
 };
 

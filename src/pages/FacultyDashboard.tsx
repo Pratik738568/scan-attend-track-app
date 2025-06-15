@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { QrCode, Plus } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
@@ -43,6 +42,11 @@ function getToday() {
   return now.toISOString().split("T")[0];
 }
 function toDate(val: string) {
+  // Converts 'YYYY-MM-DD' string to Date instance
+  const [y, m, d] = val.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+function parseIsoDate(val: string) {
   // Converts 'YYYY-MM-DD' string to Date instance
   const [y, m, d] = val.split("-").map(Number);
   return new Date(y, m - 1, d);
@@ -126,7 +130,7 @@ export default function FacultyDashboard() {
   // Filtered sessions for report, based on fromDate/toDate
   const filteredSessionsForReport = sessions.filter(session => {
     if (!fromDate && !toDate) return true;
-    const sessionDt = toDate(session.date);
+    const sessionDt = parseIsoDate(session.date);
     if (fromDate && sessionDt < fromDate) return false;
     if (toDate && sessionDt > toDate) return false;
     return true;

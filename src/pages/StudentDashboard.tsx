@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QrCode, View } from "lucide-react";
@@ -39,20 +38,20 @@ export default function StudentDashboard() {
   }
 
   function handleScan(data: any) {
-    if (data) {
-      setScanResult(data?.text ?? data);
-      setShowToast("Attendance marked!");
-      // Just mark a subject randomly in demo
-      setAtt(a =>
-        a.map(rec => (rec.marked ? rec : { ...rec, marked: true }))
-      );
+    try {
+      if (data) {
+        setScanResult(data?.text ?? data);
+        setShowToast("Attendance marked!");
+        // Just mark a subject randomly in demo
+        setAtt(a =>
+          a.map(rec => (rec.marked ? rec : { ...rec, marked: true }))
+        );
+        setScanMode(false);
+      }
+    } catch (err) {
+      setShowToast("Scan error. Try again.");
       setScanMode(false);
     }
-  }
-
-  function handleError(err: Error) {
-    setShowToast("Scan error. Try again.");
-    setScanMode(false);
   }
 
   function totalPct() {
@@ -81,7 +80,6 @@ export default function StudentDashboard() {
                 <QrReader
                   constraints={{ facingMode: "environment" }}
                   onResult={result => { if (result) handleScan(result); }}
-                  onError={handleError}
                   style={{ width: 250, minHeight: 200 }}
                 />
               </div>

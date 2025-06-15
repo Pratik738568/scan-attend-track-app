@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { QrCode, View, List } from "lucide-react";
 import RoleGuard from "@/components/RoleGuard";
@@ -31,11 +30,11 @@ const DEPT_ATTENDANCE_BY_YEAR: Record<
 > = {
   "Second Year": [],
   "Third Year": [
-    { subject: "Data Structures", present: 43, total: 50 },
-    { subject: "Operating Systems", present: 41, total: 50 },
-    { subject: "Computer Networks", present: 48, total: 50 },
-    { subject: "Database Management", present: 45, total: 50 },
-    { subject: "Discrete Mathematics", present: 40, total: 50 },
+    { subject: "Compiler Design", present: 43, total: 50 },
+    { subject: "Computer Network", present: 41, total: 50 },
+    { subject: "Development Engineering", present: 48, total: 50 },
+    { subject: "Machine Learning", present: 45, total: 50 },
+    { subject: "GIS", present: 40, total: 50 },
   ],
   "Fourth Year": []
 };

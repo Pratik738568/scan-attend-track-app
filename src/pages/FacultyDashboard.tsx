@@ -27,7 +27,7 @@ type AttendanceSession = {
   date: string,
   time: string,
   codeValue: string,
-  students: { name: string, present: boolean }[]
+  students: { name: string, rollNumber: string, present: boolean }[]
 };
 
 const DEMO_SESSIONS_INIT: AttendanceSession[] = [
@@ -38,8 +38,8 @@ const DEMO_SESSIONS_INIT: AttendanceSession[] = [
     time: "09:30",
     codeValue: "physics@2025-06-14@0930",
     students: [
-      { name: "Student Sam", present: true },
-      { name: "Jane Doe", present: false }
+      { name: "Student Sam", rollNumber: "TY001", present: true },
+      { name: "Jane Doe", rollNumber: "TY002", present: false }
     ]
   }
 ];
@@ -132,8 +132,9 @@ export default function FacultyDashboard() {
         time: qrData.time,
         codeValue,
         students: [
-          { name: "Student Sam", present: false },
-          { name: "Jane Doe", present: false }
+          // Dummy students with roll numbers
+          { name: "Student Sam", rollNumber: "TY001", present: false },
+          { name: "Jane Doe", rollNumber: "TY002", present: false }
         ]
       },
       ...ses
@@ -409,7 +410,10 @@ export default function FacultyDashboard() {
                         <ul className="px-2 mt-1">
                           {ses.students.map((stu, i) => (
                             <li key={i} className="flex items-center justify-between gap-2 py-1 text-sm">
-                              <span className="">{stu.name}</span>
+                              <span>
+                                <span className="font-medium">{stu.name}</span>
+                                <span className="ml-2 text-gray-400 text-xs">({stu.rollNumber})</span>
+                              </span>
                               <button
                                 className={`px-2 py-1 rounded-full text-xs font-semibold ${stu.present ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-600"}`}
                                 onClick={() => handleToggleAttendance(idx, i)}

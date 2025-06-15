@@ -1,8 +1,18 @@
+
 import { useState } from "react";
-import { QrCode, Plus, View } from "lucide-react";
+import { QrCode, Plus } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import RoleGuard from "@/components/RoleGuard";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type AttendanceSession = {
   id: string,
@@ -27,20 +37,33 @@ const DEMO_SESSIONS_INIT: AttendanceSession[] = [
   }
 ];
 
+// Helper: get current date in YYYY-MM-DD format
+function getToday() {
+  const now = new Date();
+  return now.toISOString().split("T")[0];
+}
+function toDate(val: string) {
+  // Converts 'YYYY-MM-DD' string to Date instance
+  const [y, m, d] = val.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+function dateToIso(date: Date) {
+  // Converts Date -> 'YYYY-MM-DD'
+  return date.toISOString().split("T")[0];
+}
+
 export default function FacultyDashboard() {
   const [viewQR, setViewQR] = useState(false);
-  const [qrData, setQRData] = useState({ subject: "", date: "", time: "" });
+  const [qrData, setQRData] = useState({ subject: "", date: getToday(), time: "" });
   const [sessions, setSessions] = useState(DEMO_SESSIONS_INIT);
   const [showNew, setShowNew] = useState(false);
   const [showToast, setShowToast] = useState<string | null>(null);
   const [sessionFilterDays, setSessionFilterDays] = useState(15);
   const navigate = useNavigate();
 
-  // Helper: get current date in YYYY-MM-DD format
-  function getToday() {
-    const now = new Date();
-    return now.toISOString().split("T")[0];
-  }
+  // Date range state for report
+  const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
+  const [toDate, setToDate] = useState<Date | undefined>(undefined);
 
   function handleLogout() {
     localStorage.removeItem("qr_user");
@@ -100,15 +123,23 @@ export default function FacultyDashboard() {
     );
   }
 
-  // Generate CSV for all attendance sessions
+  // Filtered sessions for report, based on fromDate/toDate
+  const filteredSessionsForReport = sessions.filter(session => {
+    if (!fromDate && !toDate) return true;
+    const sessionDt = toDate(session.date);
+    if (fromDate && sessionDt < fromDate) return false;
+    if (toDate && sessionDt > toDate) return false;
+    return true;
+  });
+
   function handleGenerateReport() {
-    if (!sessions.length) {
-      setShowToast("No sessions to report.");
+    if (!filteredSessionsForReport.length) {
+      setShowToast("No sessions to report in range.");
       return;
     }
     // Header row
     let csv = "Session ID,Subject,Date,Time,Student Name,Present\n";
-    sessions.forEach((session) => {
+    filteredSessionsForReport.forEach((session) => {
       session.students.forEach((stu) => {
         csv += [
           session.id,
@@ -146,6 +177,68 @@ export default function FacultyDashboard() {
           <button onClick={handleOpenQRForm} className="w-full flex items-center justify-center py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold shadow-md hover-scale">
             <Plus className="mr-2 w-7 h-7"/> Generate QR for Attendance
           </button>
+
+          {/* Date range picker for report */}
+          <div className="flex flex-col md:flex-row gap-2 w-full items-center justify-center mt-2">
+            <span className="font-semibold text-sm text-indigo-800">Report range:</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="md:w-[150px] w-full justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4 opacity-80" />
+                  {fromDate ? format(fromDate, "yyyy-MM-dd") : <span>From Date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 pointer-events-auto">
+                <Calendar
+                  mode="single"
+                  selected={fromDate}
+                  onSelect={setFromDate}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                  disabled={date => !!toDate && date > toDate}
+                />
+              </PopoverContent>
+            </Popover>
+            <span className="text-gray-500 hidden md:inline-block">-</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="md:w-[150px] w-full justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4 opacity-80" />
+                  {toDate ? format(toDate, "yyyy-MM-dd") : <span>To Date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 pointer-events-auto">
+                <Calendar
+                  mode="single"
+                  selected={toDate}
+                  onSelect={setToDate}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                  disabled={date => !!fromDate && date < fromDate}
+                />
+              </PopoverContent>
+            </Popover>
+            {(fromDate || toDate) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="px-2 text-xs ml-1"
+                onClick={() => {
+                  setFromDate(undefined);
+                  setToDate(undefined);
+                }}
+              >
+                Reset
+              </Button>
+            )}
+          </div>
+
           {/* New: Generate Report button */}
           <button
             onClick={handleGenerateReport}

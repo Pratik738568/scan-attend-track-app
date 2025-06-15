@@ -18,10 +18,14 @@ export default function SessionAttendanceList(props: SessionAttendanceListProps)
     setLoading(true);
     getAttendanceForFaculty(date, year, subject)
       .then(data => {
+        console.log("Attendance fetch:", { data, facultySession: { subject, year, date, time } });
         // Filter on time as well (since getAttendanceForFaculty doesn't include time)
         setRecords((data || []).filter(rec => rec.time === time));
       })
-      .catch(() => setRecords([]))
+      .catch((err) => {
+        console.log("Attendance fetch error:", err);
+        setRecords([]);
+      })
       .finally(() => setLoading(false));
   }, [subject, year, date, time]);
 

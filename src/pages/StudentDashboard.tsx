@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QrCode, View } from "lucide-react";
@@ -76,11 +77,10 @@ export default function StudentDashboard() {
           </button>
           {scanMode && (
             <div className="w-full flex flex-col items-center mb-3">
-              <div className="relative bg-gray-50 p-3 rounded-lg shadow-inner ring-1 ring-indigo-300 mb-2">
+              <div className="relative bg-gray-50 p-3 rounded-lg shadow-inner ring-1 ring-indigo-300 mb-2" style={{ width: 250, minHeight: 200 }}>
                 <QrReader
                   constraints={{ facingMode: "environment" }}
                   onResult={result => { if (result) handleScan(result); }}
-                  style={{ width: 250, minHeight: 200 }}
                 />
               </div>
               <button

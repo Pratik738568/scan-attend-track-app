@@ -106,6 +106,9 @@ export default function FacultyDashboard() {
   // "Sessions" in history, built from attendance
   const [sessionsFromAttendance, setSessionsFromAttendance] = useState<AttendanceSession[]>([]);
 
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrSession, setQRSession] = useState<AttendanceSession | null>(null);
+
   function handleLogout() {
     localStorage.removeItem("qr_user");
     navigate("/auth");
@@ -133,20 +136,23 @@ export default function FacultyDashboard() {
     }
     // Always use today's date for the code value and session
     const codeValue = `${qrData.subject}@${today}@${qrData.time}`;
+    const newSession: AttendanceSession = {
+      id: `${Date.now()}`, // temporary id
+      subject: qrData.subject,
+      year: qrData.year,
+      date: today,
+      time: qrData.time,
+      codeValue,
+    };
     // Add to manualSessions if this session (subject, year, date, time) doesn't exist in attendance db yet
     setManualSessions(ses => [
-      {
-        id: `${Date.now()}`, // temporary id
-        subject: qrData.subject,
-        year: qrData.year,
-        date: today,
-        time: qrData.time,
-        codeValue,
-      },
+      newSession,
       ...ses
     ]);
     setShowNew(false);
-    setShowToast("QR Code generated!");
+    setShowQRModal(true);
+    setQRSession(newSession);
+    setShowToast(null); // Don't show success toast since we'll show QR modal
   }
 
   // When attendance records change, derive unique sessions from attendance DB and merge recent manual QR codes
@@ -315,6 +321,42 @@ export default function FacultyDashboard() {
           >
             Generate Attendance Report (CSV)
           </button>
+
+          {/* New QR Modal/Section when QR is generated */}
+          {showQRModal && qrSession && (
+            <div className="fixed top-0 left-0 w-full h-full z-30 flex items-center justify-center bg-black/40 animate-fade-in">
+              <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center gap-5 min-w-[300px] max-w-full mx-2 relative">
+                <h2 className="font-bold text-xl text-indigo-700 mb-2 flex items-center gap-2">
+                  <QrCode className="w-7 h-7" /> Attendance QR
+                </h2>
+                <div className="flex flex-col items-center">
+                  <span className="text-indigo-700 font-semibold mb-1">{qrSession.subject}</span>
+                  <span className="text-gray-400 text-sm mb-2">{qrSession.date} {qrSession.time && <>@ {qrSession.time}</>}</span>
+                  {/* Big QR */}
+                  <div className="p-4 bg-indigo-50 rounded-xl border">
+                    <QRCodeCanvas value={qrSession.codeValue} size={200} includeMargin={true}/>
+                  </div>
+                </div>
+                {/* Attendance List for this session */}
+                <div className="mt-4 w-full">
+                  <h3 className="font-semibold text-md text-indigo-800 mb-2">Student Attendance</h3>
+                  <SessionAttendanceList
+                    subject={qrSession.subject}
+                    year={qrSession.year}
+                    date={qrSession.date}
+                    time={qrSession.time}
+                  />
+                </div>
+                <Button
+                  className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700"
+                  onClick={() => setShowQRModal(false)}
+                  type="button"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* New: QR generation form (uses Select for year/subject) */}
           <button

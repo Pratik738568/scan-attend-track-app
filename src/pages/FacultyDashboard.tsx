@@ -199,6 +199,16 @@ export default function FacultyDashboard() {
 
   // Filtered sessions for report, based on fromDate/toDate
   const filteredSessionsForReport = sessionsFromAttendance.filter(session => {
+    // If both dates selected and same, filter for only that day
+    if (fromDate && toDate && fromDate.getTime() === toDate.getTime()) {
+      const sessionDt = parseIsoDate(session.date);
+      return (
+        sessionDt.getFullYear() === fromDate.getFullYear() &&
+        sessionDt.getMonth() === fromDate.getMonth() &&
+        sessionDt.getDate() === fromDate.getDate()
+      );
+    }
+    // Range filter
     if (!fromDate && !toDate) return true;
     const sessionDt = parseIsoDate(session.date);
     if (fromDate && sessionDt < fromDate) return false;

@@ -88,7 +88,8 @@ export default function FacultyDashboard() {
   // qrData: add year and subject, subject will be selected only after year is selected
   const [qrData, setQRData] = useState<{ year: string; subject: string; date: string; time: string }>({ year: "", subject: "", date: getToday(), time: "" });
 
-  const [sessions, setSessions] = useState(DEMO_SESSIONS_INIT);
+  // Remove DEMO_SESSIONS_INIT as the primary data source, use sessionsFromAttendance
+  const [manualSessions, setManualSessions] = useState<AttendanceSession[]>([]); // for sessions with no attendance yet
   const [showNew, setShowNew] = useState(false);
   const [showToast, setShowToast] = useState<string | null>(null);
   const [sessionFilterDays, setSessionFilterDays] = useState(15);
@@ -97,6 +98,13 @@ export default function FacultyDashboard() {
   // Date range state for report
   const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
   const [toDate, setToDate] = useState<Date | undefined>(undefined);
+
+  // Real attendance records from Supabase
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [loadingAttendance, setLoadingAttendance] = useState(false);
+
+  // "Sessions" in history, built from attendance
+  const [sessionsFromAttendance, setSessionsFromAttendance] = useState<AttendanceSession[]>([]);
 
   function handleLogout() {
     localStorage.removeItem("qr_user");
@@ -125,9 +133,10 @@ export default function FacultyDashboard() {
     }
     // Always use today's date for the code value and session
     const codeValue = `${qrData.subject}@${today}@${qrData.time}`;
-    setSessions(ses => [
+    // Add to manualSessions if this session (subject, year, date, time) doesn't exist in attendance db yet
+    setManualSessions(ses => [
       {
-        id: `${Date.now()}`,
+        id: `${Date.now()}`, // temporary id
         subject: qrData.subject,
         year: qrData.year,
         date: today,
@@ -140,8 +149,50 @@ export default function FacultyDashboard() {
     setShowToast("QR Code generated!");
   }
 
+  // When attendance records change, derive unique sessions from attendance DB and merge recent manual QR codes
+  useEffect(() => {
+    // Group attendance by (subject, year, date, time)
+    const sessionsMap: Record<string, AttendanceSession> = {};
+    attendance.forEach(a => {
+      const key = `${a.subject}||${a.year}||${a.date}||${a.time}`;
+      if (!sessionsMap[key]) {
+        sessionsMap[key] = {
+          id: a.id || key,
+          subject: a.subject,
+          year: a.year,
+          date: a.date,
+          time: a.time,
+          codeValue: `${a.subject}@${a.date}@${a.time}`,
+        }
+      }
+    });
+    // Add sessions from manualSessions that are not in sessionsMap
+    manualSessions.forEach(ses => {
+      const key = `${ses.subject}||${ses.year}||${ses.date}||${ses.time}`;
+      if (!sessionsMap[key]) {
+        sessionsMap[key] = ses;
+      }
+    });
+    // Convert map to sorted list (newest first)
+    const sessionsArr = Object.values(sessionsMap).sort((a, b) => {
+      const dateCmp = b.date.localeCompare(a.date);
+      if (dateCmp !== 0) return dateCmp;
+      return (b.time || "").localeCompare(a.time || "");
+    });
+    setSessionsFromAttendance(sessionsArr);
+  }, [attendance, manualSessions]);
+
+  // On component mount, fetch all attendance records from Supabase
+  useEffect(() => {
+    setLoadingAttendance(true);
+    getAttendanceForFaculty()
+      .then(data => setAttendance(data || []))
+      .catch(() => setAttendance([]))
+      .finally(() => setLoadingAttendance(false));
+  }, []);
+
   // Filtered sessions for report, based on fromDate/toDate
-  const filteredSessionsForReport = sessions.filter(session => {
+  const filteredSessionsForReport = sessionsFromAttendance.filter(session => {
     if (!fromDate && !toDate) return true;
     const sessionDt = parseIsoDate(session.date);
     if (fromDate && sessionDt < fromDate) return false;
@@ -180,19 +231,6 @@ export default function FacultyDashboard() {
     document.body.removeChild(a);
     setShowToast("Report downloaded!");
   }
-
-  const [attendance, setAttendance] = useState<any[]>([]);
-  const [loadingAttendance, setLoadingAttendance] = useState(false);
-
-  // On component mount/filter change, fetch attendance records from Supabase
-  useEffect(() => {
-    setLoadingAttendance(true);
-    // Add filtering options in future
-    getAttendanceForFaculty()
-      .then(data => setAttendance(data || []))
-      .catch(() => setAttendance([]))
-      .finally(() => setLoadingAttendance(false));
-  }, []); // Add filter deps when implemented
 
   return (
     <RoleGuard role="faculty">
@@ -394,11 +432,11 @@ export default function FacultyDashboard() {
             </div>
           </div>
           <div className="w-full rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-2 overflow-y-auto max-h-80 mt-2">
-            {sessions.length === 0 ? (
+            {sessionsFromAttendance.length === 0 ? (
               <div className="text-gray-500 py-5 text-center">No sessions yet.</div>
             ) : (
               <ul className="flex flex-col gap-3">
-                {sessions.slice(0, sessionFilterDays).map((ses, idx) => (
+                {sessionsFromAttendance.slice(0, sessionFilterDays).map((ses, idx) => (
                   <li key={ses.id} className="rounded-lg shadow bg-white border flex flex-col py-2 px-4 animate-fade-in">
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-indigo-700">{ses.subject}</span>

@@ -97,6 +97,21 @@ export default function Auth() {
     }, 600);
   }
 
+  function handleDemoAuthLogin() {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      localStorage.setItem("qr_user", JSON.stringify({
+        role,
+        email: data.email,
+        name: data.name || (data.email ? data.email.split("@")[0] : "Demo User")
+      }));
+      if (role === "student") navigate("/student");
+      else if (role === "faculty") navigate("/faculty");
+      else navigate("/hod");
+    }, 600);
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-tr from-indigo-50 to-fuchsia-100 flex flex-col items-center justify-start pt-6 px-3 animate-fade-in">
       <div className="bg-white shadow-2xl rounded-2xl max-w-md w-full py-8 px-8 mb-4 border-t-8 border-indigo-400 relative animate-scale-in">
@@ -204,6 +219,17 @@ export default function Auth() {
             {mode === "login" ? "Don't have an account? Sign Up" : "Already registered? Sign In"}
           </button>
         </form>
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <span className="text-sm text-gray-400">Demo:</span>
+          <button
+            className="w-full flex items-center justify-center py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition mt-1 shadow"
+            onClick={handleDemoAuthLogin}
+            disabled={loading}
+          >
+            <LogIn size={18} className="mr-2" />
+            Quick Demo Login ({role.charAt(0).toUpperCase()+role.slice(1)})
+          </button>
+        </div>
       </div>
       <a href="/" className="mt-1 text-indigo-500 text-sm underline hover:text-indigo-700 transition">← Back to Home</a>
     </div>

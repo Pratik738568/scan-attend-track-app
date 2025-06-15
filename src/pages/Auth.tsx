@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { LogIn, QrCode, View } from "lucide-react"; // <-- Updated 'Login' to 'LogIn'
 import { useNavigate } from "react-router-dom";
@@ -25,9 +24,10 @@ type User = {
   role: Role;
   roll?: string;
   prn?: string;
+  year?: string;
 };
 
-const initialSignup = { name: "", email: "", password: "", roll: "", prn: "" };
+const initialSignup = { name: "", email: "", password: "", roll: "", prn: "", year: "" }; // Added year
 
 export default function Auth() {
   const [mode, setMode] = useState<"login"|"signup">("login");
@@ -58,7 +58,7 @@ export default function Auth() {
     setData(initialSignup);
   }
 
-  function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleInput(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setData(d => ({
       ...d,
       [e.target.name]: e.target.value,
@@ -67,7 +67,9 @@ export default function Auth() {
 
   function validateSignup(): boolean {
     if (!data.name || !data.email || !data.password) return false;
-    if (role === "student" && (!data.roll || !data.prn || data.prn.length !== 13)) return false;
+    if (role === "student") {
+      if (!data.roll || !data.prn || data.prn.length !== 13 || !data.year) return false;
+    }
     return true;
   }
 
@@ -161,6 +163,23 @@ export default function Auth() {
                     disabled={loading}
                     required
                   />
+                  {/* New Year Dropdown Field */}
+                  <select
+                    name="year"
+                    className="border px-3 py-2 rounded-lg"
+                    value={data.year}
+                    onChange={handleInput}
+                    disabled={loading}
+                    required
+                  >
+                    <option value="" disabled>
+                      Select Year
+                    </option>
+                    <option value="First Year">First Year</option>
+                    <option value="Second Year">Second Year</option>
+                    <option value="Third Year">Third Year</option>
+                    <option value="Fourth Year">Fourth Year</option>
+                  </select>
                 </>
               )}
             </>
@@ -207,7 +226,7 @@ export default function Auth() {
             onClick={handleDemoAuthLogin}
             disabled={loading}
           >
-            <LogIn size={18} className="mr-2" /> {/* Updated from <Login ... */}
+            <LogIn size={18} className="mr-2" />
             Quick Demo Login ({role.charAt(0).toUpperCase()+role.slice(1)})
           </button>
         </div>

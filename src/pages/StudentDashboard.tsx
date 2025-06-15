@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { QrCode, View } from "lucide-react";
+import { QrCode } from "lucide-react";
 import RoleGuard from "@/components/RoleGuard";
 // @ts-ignore-next-line
 import { QrReader } from "react-qr-reader";
@@ -24,6 +24,7 @@ export default function StudentDashboard() {
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [att, setAtt] = useState(EXAMPLE_ATTENDANCE);
   const [showToast, setShowToast] = useState<string | null>(null);
+  const [hasScanned, setHasScanned] = useState(false); // To prevent multiple scans/session
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,19 +41,33 @@ export default function StudentDashboard() {
 
   function handleScan(data: any) {
     try {
-      if (data) {
+      if (data && !hasScanned) {
+        setHasScanned(true);
         setScanResult(data?.text ?? data);
-        setShowToast("Attendance marked!");
-        // Just mark a subject randomly in demo
-        setAtt(a =>
-          a.map(rec => (rec.marked ? rec : { ...rec, marked: true }))
-        );
-        setScanMode(false);
+        // Wait for confirmation before marking attendance
       }
     } catch (err) {
       setShowToast("Scan error. Try again.");
+      setHasScanned(false);
       setScanMode(false);
     }
+  }
+
+  function handleMarkAttendance() {
+    // Mark random unmarked subject as present (demo logic)
+    setAtt(a =>
+      a.map(rec => (rec.marked ? rec : { ...rec, marked: true }))
+    );
+    setShowToast("Attendance marked!");
+    setScanMode(false);
+    setScanResult(null);
+    setHasScanned(false);
+  }
+
+  function handleScanCancel() {
+    setScanResult(null);
+    setHasScanned(false);
+    setScanMode(false);
   }
 
   function totalPct() {
@@ -72,22 +87,47 @@ export default function StudentDashboard() {
         <div className="w-full max-w-lg bg-white rounded-xl shadow-xl px-6 py-7 flex flex-col gap-4 items-center">
           <button
             className="w-full flex justify-center items-center py-4 mb-2 rounded-xl bg-indigo-600 text-white text-lg font-bold shadow-md hover-scale transition"
-            onClick={() => setScanMode(true)}>
+            onClick={() => { setScanMode(true); setScanResult(null); setHasScanned(false); }}>
             <QrCode className="mr-2 w-7 h-7" /> Scan QR to Mark Attendance
           </button>
           {scanMode && (
             <div className="w-full flex flex-col items-center mb-3">
-              <div className="relative bg-gray-50 p-3 rounded-lg shadow-inner ring-1 ring-indigo-300 mb-2" style={{ width: 250, minHeight: 200 }}>
-                <QrReader
-                  constraints={{ facingMode: "environment" }}
-                  onResult={result => { if (result) handleScan(result); }}
-                />
+              <div className="relative bg-gray-50 p-3 rounded-lg shadow-inner ring-1 ring-indigo-300 mb-2"
+                style={{ width: 250, minHeight: 200 }}>
+                {!scanResult && (
+                  <QrReader
+                    constraints={{ facingMode: "environment" }}
+                    onResult={result => { if (result) handleScan(result); }}
+                  />
+                )}
+                {scanResult && (
+                  <div className="flex flex-col items-center justify-center h-full min-h-[160px]">
+                    <span className="text-indigo-700 text-lg font-semibold mb-3 break-words text-center">
+                      QR Scanned!
+                    </span>
+                    <span className="text-xs text-gray-500 break-words mb-3 select-all">{scanResult}</span>
+                    <button
+                      className="w-full bg-emerald-600 text-white px-4 py-2 rounded font-semibold mb-2 hover:bg-emerald-700 transition"
+                      onClick={handleMarkAttendance}
+                    >
+                      Mark Attendance
+                    </button>
+                    <button
+                      className="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded font-medium hover:bg-gray-300 transition"
+                      onClick={handleScanCancel}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
-              <button
-                className="text-xs mt-1 text-gray-500 underline"
-                onClick={() => setScanMode(false)}>
-                Cancel
-              </button>
+              {!scanResult && (
+                <button
+                  className="text-xs mt-1 text-gray-500 underline"
+                  onClick={handleScanCancel}>
+                  Cancel
+                </button>
+              )}
             </div>
           )}
           <div className="w-full flex justify-between items-center mt-2">

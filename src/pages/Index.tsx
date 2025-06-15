@@ -12,7 +12,7 @@ const Index = () => (
       Get Started
       <ArrowDown size={22} className="ml-2 animate-bounce" />
     </Link>
-    <div className="mt-10 text-sm text-gray-400">Powered by Lovable & Capacitor</div>
+    {/* Removed "Powered by Lovable & Capacitor" text */}
   </div>
 );
 

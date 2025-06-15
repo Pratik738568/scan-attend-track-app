@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Login, QrCode, View } from "lucide-react";
+import { LogIn, QrCode, View } from "lucide-react"; // <-- Updated 'Login' to 'LogIn'
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -207,7 +207,8 @@ export default function Auth() {
             onClick={handleDemoAuthLogin}
             disabled={loading}
           >
-            <Login size={18} className="mr-2" /> Quick Demo Login ({role.charAt(0).toUpperCase()+role.slice(1)})
+            <LogIn size={18} className="mr-2" /> {/* Updated from <Login ... */}
+            Quick Demo Login ({role.charAt(0).toUpperCase()+role.slice(1)})
           </button>
         </div>
       </div>

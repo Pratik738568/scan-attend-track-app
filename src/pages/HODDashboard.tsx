@@ -1,65 +1,37 @@
-
 import { useNavigate } from "react-router-dom";
 import { QrCode, View, List } from "lucide-react";
 import RoleGuard from "@/components/RoleGuard";
 import { useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 
-// Demo data for different years
-const FACULTY_DATA_BY_YEAR: Record<string, { name: string; sessions: number }[]> = {
-  "First Year": [
-    { name: "Faculty Alpha", sessions: 7 },
-    { name: "Faculty Beta", sessions: 5 },
-  ],
-  "Second Year": [
-    { name: "Faculty Gamma", sessions: 9 },
-    { name: "Faculty Delta", sessions: 4 },
-  ],
-  "Third Year": [
-    { name: "Faculty John", sessions: 8 },
-    { name: "Faculty Jane", sessions: 6 },
-    { name: "Faculty Doe", sessions: 12 }
-  ],
-  "Fourth Year": [
-    { name: "Faculty Epsilon", sessions: 10 },
-    { name: "Faculty Zeta", sessions: 5 }
-  ]
-};
-
-const DEPT_ATTENDANCE_BY_YEAR: Record<
-  string,
-  { subject: string; present: number; total: number }[]
-> = {
-  "First Year": [
-    { subject: "Mathematics I", present: 45, total: 50 },
-    { subject: "Physics I", present: 43, total: 50 },
-    { subject: "Chemistry I", present: 41, total: 50 },
-  ],
-  "Second Year": [
-    { subject: "Mathematics II", present: 47, total: 50 },
-    { subject: "Physics II", present: 46, total: 50 },
-    { subject: "Chemistry II", present: 48, total: 50 },
-  ],
-  "Third Year": [
-    { subject: "Compiler Design", present: 44, total: 50 },
-    { subject: "Computer Network", present: 42, total: 50 },
-    { subject: "Development Engineering", present: 39, total: 50 },
-    { subject: "Machine Learning", present: 40, total: 50 },
-    { subject: "GIS", present: 43, total: 50 },
-  ],
-  "Fourth Year": [
-    { subject: "Project Management", present: 46, total: 50 },
-    { subject: "Cyber Security", present: 41, total: 50 },
-    { subject: "Cloud Computing", present: 38, total: 50 },
-  ]
-};
-
+// Only keep year options for 2nd, 3rd, 4th year (remove 'First Year')
 const YEAR_OPTIONS = [
-  "First Year",
   "Second Year",
   "Third Year",
   "Fourth Year"
 ] as const;
+
+// Only show faculty for 'Third Year'
+const FACULTY_DATA_BY_YEAR: Record<string, { name: string; sessions: number }[]> = {
+  "Second Year": [], // blank
+  "Third Year": [
+    { name: "Gajanan Tikhe", sessions: 0 },
+    { name: "Amol Jumde", sessions: 0 },
+    { name: "Sunny Gandhi", sessions: 0 },
+    { name: "Urvashi Pote", sessions: 0 }
+  ],
+  "Fourth Year": [] // blank
+};
+
+// No department attendance for 2nd/4th year
+const DEPT_ATTENDANCE_BY_YEAR: Record<
+  string,
+  { subject: string; present: number; total: number }[]
+> = {
+  "Second Year": [],
+  "Third Year": [],
+  "Fourth Year": []
+};
 
 export default function HODDashboard() {
   const [selectedYear, setSelectedYear] = useState<(typeof YEAR_OPTIONS)[number]>("Third Year");
@@ -83,7 +55,6 @@ export default function HODDashboard() {
     setShowToast("QR Code generated!");
   }
 
-  // Demo data per selected year, fallback to empty arrays
   const facultyList = FACULTY_DATA_BY_YEAR[selectedYear] || [];
   const deptAttendance = DEPT_ATTENDANCE_BY_YEAR[selectedYear] || [];
 
@@ -134,29 +105,33 @@ export default function HODDashboard() {
           )}
           <div className="w-full my-3 rounded-lg bg-indigo-50 px-3 py-2 border border-indigo-100 animate-fade-in">
             <span className="font-semibold text-indigo-700">Faculty Overview</span>
-            <ul className="mt-1 divide-y divide-indigo-100">
-              {facultyList.map((f, i) => (
-                <li key={i} className="flex items-center justify-between py-1 text-sm">
-                  <span>{f.name}</span>
-                  <span className="text-indigo-600 font-semibold">{f.sessions} lectures</span>
-                </li>
-              ))}
-            </ul>
+            {facultyList.length === 0 ? (
+              <div className="text-center text-sm text-gray-400 py-3">No data available.</div>
+            ) : (
+              <ul className="mt-1 divide-y divide-indigo-100">
+                {facultyList.map((f, i) => (
+                  <li key={i} className="flex items-center justify-between py-1 text-sm">
+                    <span>{f.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div className="w-full mt-1 rounded-lg bg-fuchsia-50 px-3 py-2 border border-fuchsia-100 animate-fade-in">
             <span className="font-semibold text-fuchsia-700">Department Attendance</span>
-            <ul className="mt-2 divide-y divide-fuchsia-100">
-              {deptAttendance.map((att, i) => (
-                <li key={i} className="flex justify-between py-1.5 items-center text-sm">
-                  <span className="font-medium">{att.subject}</span>
-                  <span className="font-semibold text-emerald-600">{Math.round(att.present / att.total * 100)}%</span>
-                  <span className="text-xs text-gray-400">({att.present}/{att.total})</span>
-                </li>
-              ))}
-              {deptAttendance.length === 0 && (
-                <li className="text-center text-sm text-gray-400 py-3">No attendance data for {selectedYear}.</li>
-              )}
-            </ul>
+            {deptAttendance.length === 0 ? (
+              <div className="text-center text-sm text-gray-400 py-3">No data available.</div>
+            ) : (
+              <ul className="mt-2 divide-y divide-fuchsia-100">
+                {deptAttendance.map((att, i) => (
+                  <li key={i} className="flex justify-between py-1.5 items-center text-sm">
+                    <span className="font-medium">{att.subject}</span>
+                    <span className="font-semibold text-emerald-600">{Math.round(att.present / att.total * 100)}%</span>
+                    <span className="text-xs text-gray-400">({att.present}/{att.total})</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div className="w-full mt-4 flex flex-col gap-3">
             <button className="w-full bg-indigo-500 text-white py-2 rounded-lg font-semibold shadow hover:bg-indigo-700">
@@ -172,4 +147,3 @@ export default function HODDashboard() {
     </RoleGuard>
   );
 }
-

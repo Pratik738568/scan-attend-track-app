@@ -298,6 +298,12 @@ export default function FacultyDashboard() {
           </button>
 
           {/* New: QR generation form (uses Select for year/subject) */}
+          <button
+            className="w-full flex justify-center items-center py-3 mb-2 rounded-xl bg-indigo-600 text-white text-lg font-bold shadow-md hover-scale"
+            onClick={handleOpenQRForm}
+          >
+            <QrCode className="mr-2 w-6 h-6" /> Create Attendance QR Code
+          </button>
           {showNew && (
             <form
               className="w-full bg-indigo-50 border border-indigo-100 rounded-lg py-4 px-3 mb-3 flex flex-col gap-3 animate-fade-in"

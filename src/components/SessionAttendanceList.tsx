@@ -18,16 +18,44 @@ export default function SessionAttendanceList(props: SessionAttendanceListProps)
     setLoading(true);
     getAttendanceForFaculty(date, year, subject)
       .then(data => {
-        // Normalize both to string and trim, also log for debugging
-        const DBtimes = (data || []).map((rec: any) => rec.time);
-        console.log("FACULTY ATTENDANCE FILTER", { uiTime: time, DBtimes });
-        setRecords(
-          (data || []).filter(
-            rec => typeof rec.time === "string" &&
-            typeof time === "string" &&
-            rec.time.trim() === time.trim()
-          )
-        );
+        // Normalize fields and log for debugging
+        const normalizedUiTime = (time ?? "").trim().toLowerCase();
+        const normalizedUiSubject = (subject ?? "").trim().toLowerCase();
+        const normalizedUiYear = (year ?? "").trim().toLowerCase();
+        const normalizedUiDate = (date ?? "").trim();
+
+        const normalizedRecords = (data || []).filter(rec => {
+          // Defensive: trim and lowercase everything
+          const recTime = (rec.time ?? "").trim().toLowerCase();
+          const recSubject = (rec.subject ?? "").trim().toLowerCase();
+          const recYear = (rec.year ?? "").trim().toLowerCase();
+          const recDate = (rec.date ?? "").trim();
+
+          // Debug log for each attendance row
+          console.log("Faculty Attendance Filter Check", {
+            ui: { 
+              subject: normalizedUiSubject, 
+              year: normalizedUiYear, 
+              date: normalizedUiDate, 
+              time: normalizedUiTime 
+            },
+            db: { 
+              subject: recSubject, 
+              year: recYear, 
+              date: recDate, 
+              time: recTime 
+            }
+          });
+
+          return (
+            recTime === normalizedUiTime &&
+            recSubject === normalizedUiSubject &&
+            recYear === normalizedUiYear &&
+            recDate === normalizedUiDate
+          );
+        });
+
+        setRecords(normalizedRecords);
       })
       .catch((err) => {
         console.log("Attendance fetch error:", err);
@@ -36,8 +64,10 @@ export default function SessionAttendanceList(props: SessionAttendanceListProps)
       .finally(() => setLoading(false));
   }, [subject, year, date, time]);
 
-  if (loading) return <div className="text-xs text-gray-400 p-2">Loading...</div>;
-  if (records.length === 0) return <div className="text-xs text-gray-400 p-2">No attendance yet.</div>;
+  if (loading)
+    return <div className="text-xs text-gray-400 p-2">Loading...</div>;
+  if (records.length === 0)
+    return <div className="text-xs text-gray-400 p-2">No attendance yet.</div>;
 
   return (
     <ul className="px-2 mt-1">

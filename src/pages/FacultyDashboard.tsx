@@ -467,40 +467,10 @@ export default function FacultyDashboard() {
         </div>
         <div className="w-full mt-4">
             <h3 className="text-lg font-semibold mb-2">Attendance Records</h3>
-            {loadingAttendance ? (
-              <div className="text-gray-400">Loading...</div>
-            ) : (
-              <table className="w-full text-sm rounded bg-indigo-50">
-                <thead>
-                  <tr>
-                    <th className="p-2">Student Name</th>
-                    <th className="p-2">Subject</th>
-                    <th className="p-2">Year</th>
-                    <th className="p-2">Date</th>
-                    <th className="p-2">Time</th>
-                    <th className="p-2">QR Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendance.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="text-gray-400 text-center p-4">No attendance records found.</td>
-                    </tr>
-                  )}
-                  {attendance.map(a => (
-                    <tr key={a.id}>
-                      <td className="p-2">{a.student_name}</td>
-                      <td className="p-2">{a.subject}</td>
-                      <td className="p-2">{a.year}</td>
-                      <td className="p-2">{a.date}</td>
-                      <td className="p-2">{a.time}</td>
-                      <td className="p-2">{a.qr_code_value}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+            <div className="text-gray-400 py-6 text-center">
+              Attendance records are currently not displayed.
+            </div>
+        </div>
         {showToast && (
           <div className="fixed left-1/2 bottom-10 transform -translate-x-1/2 bg-emerald-700 text-white font-semibold px-6 py-2 rounded-xl shadow-lg animate-fade-in">{showToast}</div>
         )}

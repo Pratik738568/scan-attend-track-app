@@ -12,6 +12,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+// Import Select UI components
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 type AttendanceSession = {
   id: string,
@@ -36,6 +44,16 @@ const DEMO_SESSIONS_INIT: AttendanceSession[] = [
   }
 ];
 
+// Academic years and subjects mapping
+const YEAR_SUBJECTS: Record<string, string[]> = {
+  "First Year": ["Mathematics I", "Physics", "Chemistry", "English"],
+  "Second Year": ["Mathematics II", "Electronics", "Computer Programming"],
+  "Third Year": ["Data Structures", "Microprocessors", "Control Systems"],
+  "Fourth Year": ["Machine Learning", "Project Management", "AI Basics"],
+};
+// List of available years
+const ACADEMIC_YEARS = Object.keys(YEAR_SUBJECTS);
+
 // Helper: get current date in YYYY-MM-DD format
 function getToday() {
   const now = new Date();
@@ -58,7 +76,10 @@ function dateToIso(date: Date) {
 
 export default function FacultyDashboard() {
   const [viewQR, setViewQR] = useState(false);
-  const [qrData, setQRData] = useState({ subject: "", date: getToday(), time: "" });
+
+  // qrData: add year and subject, subject will be selected only after year is selected
+  const [qrData, setQRData] = useState<{ year: string; subject: string; date: string; time: string }>({ year: "", subject: "", date: getToday(), time: "" });
+
   const [sessions, setSessions] = useState(DEMO_SESSIONS_INIT);
   const [showNew, setShowNew] = useState(false);
   const [showToast, setShowToast] = useState<string | null>(null);
@@ -76,19 +97,19 @@ export default function FacultyDashboard() {
 
   function handleOpenQRForm() {
     setShowNew(true);
-    setQRData({ subject: "", date: getToday(), time: "" });
+    setQRData({ year: "", subject: "", date: getToday(), time: "" });
   }
 
-  function handleQRFormChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const { name, value } = e.target;
-    // Only allow subject and time changes, date is always today's date
-    setQRData(d => name === "date" ? d : { ...d, [name]: value });
+  // Only allow time changes; year/subject are handled via Selects, date is always today
+  function handleQRTimeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const { value } = e.target;
+    setQRData(d => ({ ...d, time: value }));
   }
 
   function handleGenerateQR(e: React.FormEvent) {
     e.preventDefault();
     const today = getToday();
-    if (!qrData.subject || !qrData.time) {
+    if (!qrData.year || !qrData.subject || !qrData.time) {
       setShowToast("All fields required.");
       return;
     }
@@ -250,16 +271,60 @@ export default function FacultyDashboard() {
           >
             Generate Attendance Report (CSV)
           </button>
+
+          {/* New: QR generation form (uses Select for year/subject) */}
           {showNew && (
             <form className="w-full bg-indigo-50 border border-indigo-100 rounded-lg py-4 px-3 mb-3 flex flex-col gap-3 animate-fade-in" onSubmit={handleGenerateQR}>
-              <input name="subject" className="border px-3 py-2 rounded-xl" placeholder="Subject" onChange={handleQRFormChange} value={qrData.subject} required/>
+              {/* Academic Year selection */}
+              <div>
+                <label className="font-medium text-sm mb-1 block" htmlFor="select-year">Academic Year</label>
+                <Select
+                  value={qrData.year}
+                  onValueChange={val => {
+                    setQRData(d => ({
+                      ...d,
+                      year: val,
+                      subject: "" // reset subject if year changes
+                    }));
+                  }}
+                >
+                  <SelectTrigger id="select-year">
+                    <SelectValue placeholder="Select Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ACADEMIC_YEARS.map(year => (
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Subject selection (enabled only if year is selected) */}
+              <div>
+                <label className="font-medium text-sm mb-1 block" htmlFor="select-subject">Subject</label>
+                <Select
+                  value={qrData.subject}
+                  onValueChange={val => setQRData(d => ({ ...d, subject: val }))}
+                  disabled={!qrData.year}
+                >
+                  <SelectTrigger id="select-subject">
+                    <SelectValue placeholder={qrData.year ? "Select Subject" : "Choose year first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(qrData.year ? YEAR_SUBJECTS[qrData.year] : []).map(sub =>
+                      <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               <input name="date" type="date" className="border px-3 py-2 rounded-xl bg-gray-100" value={getToday()} readOnly required/>
-              <input name="time" type="time" className="border px-3 py-2 rounded-xl" onChange={handleQRFormChange} value={qrData.time} required/>
+              <input name="time" type="time" className="border px-3 py-2 rounded-xl" onChange={handleQRTimeChange} value={qrData.time} required/>
               <button type="submit" className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700">Create & Show QR</button>
               <button type="button" className="text-xs mt-2 text-gray-500 underline" onClick={() => setShowNew(false)}>Cancel</button>
             </form>
           )}
 
+          {/* Session History */}
           <div className="w-full flex justify-between items-center mt-1">
             <span className="font-semibold text-indigo-700">Session History</span>
             <div className="flex gap-2 items-center">

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QrCode } from "lucide-react";
@@ -22,6 +21,14 @@ const EXAMPLE_ATTENDANCE = [
   { subject: "Machine Learning", date: "2025-06-01", marked: false },
   { subject: "GIS", date: "2025-06-01", marked: false },
 ];
+
+// Academic Year normalization mapping
+const YEAR_NORMALIZATION: Record<string, string> = {
+  "1": "First Year", "first year": "First Year", "First Year": "First Year",
+  "2": "Second Year", "second year": "Second Year", "Second Year": "Second Year",
+  "3": "Third Year", "third year": "Third Year", "Third Year": "Third Year",
+  "4": "Fourth Year", "fourth year": "Fourth Year", "Fourth Year": "Fourth Year",
+};
 
 export default function StudentDashboard() {
   const [scanMode, setScanMode] = useState(false);
@@ -94,7 +101,7 @@ export default function StudentDashboard() {
       // For demo, parse QR value for subject/date/time if possible
       let subject = "Unknown";
       let date = now.toISOString().slice(0, 10);
-      let time = now.toTimeString().slice(0,5);
+      let time = now.toTimeString().slice(0, 5);
       if (scanResult && scanResult.includes("@")) {
         const parts = scanResult.split("@");
         if (parts.length >= 3) {
@@ -103,11 +110,15 @@ export default function StudentDashboard() {
           time = parts[2];
         }
       }
+      // Normalize student year for proper matching in faculty dashboard
+      let rawYear = user.year || "Unknown";
+      let normalizedYear = YEAR_NORMALIZATION[String(rawYear).trim().toLowerCase()] || rawYear;
+
       await insertAttendance({
         student_id: user.roll || user.prn,
         student_name: user.name,
         subject,
-        year: user.year || "Unknown",
+        year: normalizedYear,
         date,
         time,
         qr_code_value: scanResult || "",

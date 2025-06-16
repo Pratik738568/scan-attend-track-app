@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +40,30 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Hide Lovable branding elements */
+[data-lovable-badge],
+.lovable-badge,
+#lovable-badge,
+iframe[src*="lovable"],
+div[class*="lovable"],
+button[class*="lovable"],
+a[href*="lovable.dev"],
+a[href*="edit"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Hide any floating buttons or edit buttons */
+button[style*="position: fixed"],
+div[style*="position: fixed"]:has(button),
+.fixed button[class*="edit"],
+.fixed a[class*="edit"] {
+  display: none !important;
 }

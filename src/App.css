@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -41,49 +42,82 @@
   color: #888;
 }
 
-/* Hide Lovable branding elements - comprehensive approach */
+/* Hide ALL Lovable branding elements - most comprehensive approach */
 [data-lovable-badge],
 [data-lovable="badge"],
+[data-lovable],
+[class*="lovable"],
+[id*="lovable"],
 .lovable-badge,
 #lovable-badge,
 iframe[src*="lovable"],
 div[class*="lovable"],
 button[class*="lovable"],
 a[href*="lovable.dev"],
+a[href*="lovable.app"],
 a[href*="edit"],
 button[title*="Edit"],
 button[title*="Lovable"],
 div[title*="Edit"],
 div[title*="Lovable"],
 *[aria-label*="Edit"],
-*[aria-label*="Lovable"] {
+*[aria-label*="Lovable"],
+*[data-testid*="lovable"],
+*[data-testid*="edit"],
+button:has(svg[data-icon="edit"]),
+button:has(svg[data-lucide="edit"]),
+a:has(svg[data-icon="edit"]),
+a:has(svg[data-lucide="edit"]) {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
   position: absolute !important;
   left: -9999px !important;
+  top: -9999px !important;
   width: 0 !important;
   height: 0 !important;
   pointer-events: none !important;
+  z-index: -9999 !important;
 }
 
-/* Hide any floating buttons or edit buttons */
+/* Hide any floating buttons, edit buttons, and positioned elements */
 button[style*="position: fixed"],
+button[style*="position: absolute"],
 div[style*="position: fixed"]:has(button),
+div[style*="position: absolute"]:has(button),
 .fixed button[class*="edit"],
 .fixed a[class*="edit"],
+.absolute button[class*="edit"],
+.absolute a[class*="edit"],
 button[style*="z-index"],
 div[style*="z-index"]:has(button[title*="Edit"]),
 div[style*="bottom"]:has(button),
-div[style*="right"]:has(button) {
+div[style*="top"]:has(button),
+div[style*="right"]:has(button),
+div[style*="left"]:has(button),
+*[style*="position: fixed"],
+*[style*="position: absolute"] {
   display: none !important;
 }
 
-/* Hide specific Lovable UI elements */
+/* Hide specific Lovable UI elements and patterns */
 div > button:only-child[style*="position"],
 div > a:only-child[href*="edit"],
 *:has(> svg[viewBox="0 0 24 24"]):has(button),
-*:has(> button):has(svg[data-lucide]) {
+*:has(> button):has(svg[data-lucide]),
+button[class*="rounded"]:has(svg),
+a[class*="rounded"]:has(svg),
+div[class*="fixed"]:has(button),
+div[class*="absolute"]:has(button) {
+  display: none !important;
+}
+
+/* Target common Lovable button/link patterns */
+button[class*="bg-"][class*="text-white"],
+button[class*="shadow"]:has(svg),
+a[class*="shadow"]:has(svg),
+*[class*="hover:bg-"]:has(svg[data-lucide]),
+*[style*="background-color"]:has(svg) {
   display: none !important;
 }
 
@@ -91,7 +125,30 @@ div > a:only-child[href*="edit"],
 *[class*="edit"]:not([class*="editable"]):not([class*="editor"]),
 *[id*="edit"]:not([id*="editable"]):not([id*="editor"]),
 *:contains("Edit in Lovable"),
-*:contains("Powered by Lovable") {
+*:contains("Powered by Lovable"),
+*:contains("Edit with"),
+*:contains("Built with Lovable") {
   display: none !important;
   visibility: hidden !important;
+}
+
+/* Hide any element with Lovable logo or branding images */
+img[src*="lovable"],
+img[alt*="lovable"],
+img[alt*="Lovable"],
+svg[class*="lovable"],
+*[style*="background-image"]:has(*[src*="lovable"]) {
+  display: none !important;
+}
+
+/* Nuclear option - hide any suspicious floating elements */
+body > div:not(#root),
+body > button,
+body > a,
+html > div:not(body),
+*[style*="position: fixed"][style*="bottom"],
+*[style*="position: fixed"][style*="top"],
+*[style*="position: absolute"][style*="bottom"],
+*[style*="position: absolute"][style*="top"] {
+  display: none !important;
 }

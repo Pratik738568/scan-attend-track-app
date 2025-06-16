@@ -1,4 +1,3 @@
-
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -42,15 +41,22 @@
   color: #888;
 }
 
-/* Hide Lovable branding elements */
+/* Hide Lovable branding elements - comprehensive approach */
 [data-lovable-badge],
+[data-lovable="badge"],
 .lovable-badge,
 #lovable-badge,
 iframe[src*="lovable"],
 div[class*="lovable"],
 button[class*="lovable"],
 a[href*="lovable.dev"],
-a[href*="edit"] {
+a[href*="edit"],
+button[title*="Edit"],
+button[title*="Lovable"],
+div[title*="Edit"],
+div[title*="Lovable"],
+*[aria-label*="Edit"],
+*[aria-label*="Lovable"] {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
@@ -58,12 +64,34 @@ a[href*="edit"] {
   left: -9999px !important;
   width: 0 !important;
   height: 0 !important;
+  pointer-events: none !important;
 }
 
 /* Hide any floating buttons or edit buttons */
 button[style*="position: fixed"],
 div[style*="position: fixed"]:has(button),
 .fixed button[class*="edit"],
-.fixed a[class*="edit"] {
+.fixed a[class*="edit"],
+button[style*="z-index"],
+div[style*="z-index"]:has(button[title*="Edit"]),
+div[style*="bottom"]:has(button),
+div[style*="right"]:has(button) {
   display: none !important;
+}
+
+/* Hide specific Lovable UI elements */
+div > button:only-child[style*="position"],
+div > a:only-child[href*="edit"],
+*:has(> svg[viewBox="0 0 24 24"]):has(button),
+*:has(> button):has(svg[data-lucide]) {
+  display: none !important;
+}
+
+/* Additional catch-all for any remaining branding */
+*[class*="edit"]:not([class*="editable"]):not([class*="editor"]),
+*[id*="edit"]:not([id*="editable"]):not([id*="editor"]),
+*:contains("Edit in Lovable"),
+*:contains("Powered by Lovable") {
+  display: none !important;
+  visibility: hidden !important;
 }
